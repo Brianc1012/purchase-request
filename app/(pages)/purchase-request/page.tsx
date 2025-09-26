@@ -12,6 +12,7 @@ import AddPurchaseModal, { PurchaseRequestForm } from "./addPurchaseModal";
 import EditPurchaseModal from "./editPurchaseModal";
 //@ts-ignore
 import ViewPurchaseModal from "./viewPurchaseModal";
+import { showConfirmation, showSuccess, showError } from "../../utility/Alerts";
 
 // @ts-ignore
 import "../../styles/components/filter.css";
@@ -62,7 +63,7 @@ const hardcodedData = [
         quantity: 8,
         unitMeasure: "pcs",
         requestType: "normal",
-        requestStatus: "pending",
+        requestStatus: "completed",
         requestPurpose: "Scheduled maintenance for fleet",
         vendor: "FilterPro Ltd.",
         unitPrice: 35.00
@@ -73,7 +74,7 @@ const hardcodedData = [
         quantity: 12,
         unitMeasure: "sets",
         requestType: "urgent",
-        requestStatus: "rejected",
+        requestStatus: "partially-completed",
         requestPurpose: "Emergency repair for Bus 005",
         vendor: "BrakeTech Corp.",
         unitPrice: 180.00
@@ -130,7 +131,9 @@ export default function PurchaseRequest() {
             options: [
                 { id: "pending", label: "Pending" },
                 { id: "approved", label: "Approved" },
-                { id: "rejected", label: "Rejected" }
+                { id: "rejected", label: "Rejected" },
+                { id: "completed", label: "Completed" },
+                { id: "partially-completed", label: "Partially Completed" }
             ]
         },
         {
@@ -239,6 +242,10 @@ export default function PurchaseRequest() {
                 return "Approved";
             case "rejected":
                 return "Rejected";
+            case "completed":
+                return "Completed";
+            case "partially-completed":
+                return "Partially Completed";
             default:
                 return requestStatus;
         }
@@ -339,6 +346,184 @@ export default function PurchaseRequest() {
         closeModal();
     };
 
+    // Handle cancel request
+    const handleCancelRequest = async (request: any) => {
+        const result = await showConfirmation(
+            `Are you sure you want to <b>CANCEL</b> the purchase request for "${request.itemName}"?`,
+            "Cancel Request"
+        );
+        
+        if (result.isConfirmed) {
+            const updatedData = filteredData.map(item => 
+                item.id === request.id 
+                    ? { ...item, requestStatus: "cancelled" }
+                    : item
+            );
+            setFilteredData(updatedData);
+            showSuccess("Purchase request has been cancelled successfully.", "Request Cancelled");
+        }
+    };
+
+    // Handle rollback request
+    const handleRollbackRequest = async (request: any) => {
+        const result = await showConfirmation(
+            `Are you sure you want to <b>ROLLBACK</b> the purchase request for "${request.itemName}" to pending status?`,
+            "Rollback Request"
+        );
+        
+        if (result.isConfirmed) {
+            const updatedData = filteredData.map(item => 
+                item.id === request.id 
+                    ? { ...item, requestStatus: "pending" }
+                    : item
+            );
+            setFilteredData(updatedData);
+            showSuccess("Purchase request has been rolled back to pending status.", "Request Rolled Back");
+        }
+    };
+
+    // Handle export request
+    const handleExportRequest = async (request: any) => {
+        try {
+            // Simulate export functionality
+            const exportData = {
+                id: request.id,
+                itemName: request.itemName,
+                quantity: request.quantity,
+                unitMeasure: request.unitMeasure,
+                vendor: request.vendor,
+                unitPrice: request.unitPrice,
+                totalAmount: request.quantity * request.unitPrice,
+                requestStatus: request.requestStatus,
+                requestType: request.requestType,
+                requestPurpose: request.requestPurpose,
+                exportDate: new Date().toLocaleDateString()
+            };
+            
+            // In a real application, this would download a file
+            console.log("Exporting data:", exportData);
+            showSuccess(`Purchase request data for "${request.itemName}" has been exported successfully.`, "Export Successful");
+        } catch (error) {
+            showError("Failed to export the purchase request data.", "Export Failed");
+        }
+    };
+
+    // Handle audit trail
+    const handleAuditTrail = (request: any) => {
+        // Simulate audit trail data
+        const auditData = [
+            { date: "2024-01-15", action: "Created", user: "John Doe", status: "pending" },
+            { date: "2024-01-16", action: "Updated", user: "Jane Smith", status: "pending" },
+            { date: "2024-01-17", action: "Approved", user: "Manager A", status: "approved" },
+            { date: "2024-01-18", action: "Completed", user: "System", status: "completed" }
+        ];
+        
+        console.log("Audit trail for request:", request.id, auditData);
+        // In a real application, this would open a modal with audit trail details
+        showSuccess(`Audit trail for "${request.itemName}" has been generated.`, "Audit Trail");
+    };
+
+    // Handle process refund
+    const handleProcessRefund = async (request: any) => {
+        const result = await showConfirmation(
+            `Are you sure you want to <b>PROCESS REFUND</b> for the purchase request "${request.itemName}"?<br/>
+            <small>This action will initiate the refund process.</small>`,
+            "Process Refund"
+        );
+        
+        if (result.isConfirmed) {
+            const updatedData = filteredData.map(item => 
+                item.id === request.id 
+                    ? { ...item, requestStatus: "refund-processing" }
+                    : item
+            );
+            setFilteredData(updatedData);
+            showSuccess("Refund process has been initiated successfully.", "Refund Processing");
+        }
+    };
+
+    // Handle track status
+    const handleTrackStatus = (request: any) => {
+        // Simulate tracking information
+        const trackingInfo = {
+            requestId: request.id,
+            currentStatus: request.requestStatus,
+            estimatedCompletion: "2024-02-15",
+            lastUpdate: new Date().toLocaleDateString(),
+            trackingSteps: [
+                { step: "Request Submitted", completed: true, date: "2024-01-15" },
+                { step: "Pending Approval", completed: true, date: "2024-01-16" },
+                { step: "Approved", completed: request.requestStatus !== "pending", date: request.requestStatus !== "pending" ? "2024-01-17" : null },
+                { step: "Processing", completed: request.requestStatus === "completed" || request.requestStatus === "partially-completed", date: request.requestStatus === "completed" ? "2024-01-18" : null },
+                { step: "Completed", completed: request.requestStatus === "completed", date: request.requestStatus === "completed" ? "2024-01-19" : null }
+            ]
+        };
+        
+        console.log("Tracking info for request:", request.id, trackingInfo);
+        // In a real application, this would open a modal with tracking details
+        showSuccess(`Tracking information for "${request.itemName}" has been retrieved.`, "Status Tracking");
+    };
+
+    // Get conditional action buttons based on request status
+    const getActionButtons = (request: any) => {
+        const commonProps = {
+            onView: () => openModal("view-purchase-request", request)
+        };
+
+        switch (request.requestStatus) {
+            case "pending":
+                return (
+                    <ActionButtons
+                        {...commonProps}
+                        onEdit={() => openModal("edit-purchase-request", request)}
+                        onCancel={() => handleCancelRequest(request)}
+                    />
+                );
+            
+            case "approved":
+                return (
+                    <ActionButtons
+                        {...commonProps}
+                        onRollback={() => handleRollbackRequest(request)}
+                        onCancel={() => handleCancelRequest(request)}
+                    />
+                );
+            
+            case "rejected":
+                return (
+                    <ActionButtons
+                        {...commonProps}
+                        onRollback={() => handleRollbackRequest(request)}
+                    />
+                );
+            
+            case "completed":
+                return (
+                    <ActionButtons
+                        {...commonProps}
+                        onExport={() => handleExportRequest(request)}
+                        onAuditTrail={() => handleAuditTrail(request)}
+                    />
+                );
+            
+            case "partially-completed":
+                return (
+                    <ActionButtons
+                        {...commonProps}
+                        onProcessRefund={() => handleProcessRefund(request)}
+                        onTrackStatus={() => handleTrackStatus(request)}
+                    />
+                );
+            
+            default:
+                return (
+                    <ActionButtons
+                        {...commonProps}
+                    />
+                );
+        }
+    };
+
     return (
         <div className="card">
             <h1 className="title">Purchase Request</h1>
@@ -406,10 +591,7 @@ export default function PurchaseRequest() {
                                         </td>
                                         <td>{formatRequestType(request.requestType)}</td>
                                         <td>
-                                            <ActionButtons
-                                                onView={() => openModal("view-purchase-request", request)}
-                                                onEdit={() => openModal("edit-purchase-request", request)}
-                                            />
+                                            {getActionButtons(request)}
                                         </td>
                                     </tr>
                                 ))}

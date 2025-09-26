@@ -26,6 +26,30 @@
     background-color: var(--error-color);
 }
 
+.action-btn.cancel {
+    background-color: var(--error-color, #ff9800);
+}
+
+.action-btn.rollback {
+    background-color: var(--info-color);
+}
+
+.action-btn.export {
+    background-color: var(--success-color);
+}
+
+.action-btn.audit {
+    background-color: #6c757d;
+}
+
+.action-btn.refund {
+    background-color: #e91e63;
+}
+
+.action-btn.track {
+    background-color: #673ab7;
+}
+
 /* ----- ACTION BUTTONS: HOVER STYLING ----- */
 .action-btn.view:hover:not(.disabled) {
     background-color: var(--success-hover-color);
@@ -37,6 +61,30 @@
 
 .action-btn.delete:hover:not(.disabled) {
     background-color: var(--error-hover-color);
+}
+
+.action-btn.cancel:hover:not(.disabled) {
+    background-color: var(--error-hover-color);
+}
+
+.action-btn.rollback:hover:not(.disabled) {
+    background-color: var(--info-hover-color);
+}
+
+.action-btn.export:hover:not(.disabled) {
+    background-color: var(--success-hover-color);
+}
+
+.action-btn.audit:hover:not(.disabled) {
+    background-color: #5a6268;
+}
+
+.action-btn.refund:hover:not(.disabled) {
+    background-color: #c2185b;
+}
+
+.action-btn.track:hover:not(.disabled) {
+    background-color: #512da8;
 }
 
 /* ----- DISABLED STATE STYLING ----- */
