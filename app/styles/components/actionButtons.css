@@ -27,7 +27,7 @@
 }
 
 .action-btn.cancel {
-    background-color: var(--error-color, #ff9800);
+    background-color: var(--error-color);
 }
 
 .action-btn.rollback {

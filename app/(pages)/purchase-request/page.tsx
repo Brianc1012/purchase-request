@@ -7,12 +7,48 @@ import ActionButtons from "../../Components/actionButtons";
 import FilterDropdown, { FilterSection } from "../../Components/filter";
 import PaginationComponent from "../../Components/pagination";
 //@ts-ignore
-import AddPurchaseModal, { PurchaseRequestForm } from "./addPurchaseModal";
+import AddPurchaseRequest from "./addPurchaseRequest";
 //@ts-ignore
-import EditPurchaseModal from "./editPurchaseModal";
+import EditPurchaseRequest from "./editPurchaseRequest";
 //@ts-ignore
-import ViewPurchaseModal from "./viewPurchaseModal";
+import ViewPurchaseRequest from "./viewPurchaseRequest";
+//@ts-ignore
+import AuditTrailPurchaseRequest from "./auditTrailPurchaseRequest";
+//@ts-ignore
+import TrackStatusPurchaseRequest from "./trackStatusPurchaseRequest";
 import { showConfirmation, showSuccess, showError } from "../../utility/Alerts";
+
+// Import type for purchase requests
+interface NewBudgetRequest {
+  title: string;
+  description: string;
+  department: string;
+  requester_name: string;
+  requester_position: string;
+  request_date: string;
+  budget_period: string;
+  total_amount: number;
+  start_date: string;
+  end_date: string;
+  items?: any[];
+  supporting_documents?: File[];
+  status: 'Draft' | 'Pending Approval';
+  created_by: string;
+}
+
+// Legacy interface for edit functionality
+interface PurchaseRequestForm {
+  itemName: string;
+  quantity: number;
+  unitMeasure: string;
+  requestType: string;
+  requestStatus: string;
+  requestPurpose: string;
+  supplierDetails?: {
+    supplierName?: string;
+    unitPrice?: number;
+  };
+}
 
 // @ts-ignore
 import "../../styles/components/filter.css";
@@ -263,27 +299,43 @@ export default function PurchaseRequest() {
         }
     }
 
-    // for the modals of add, view, and edit
-    const openModal = (mode: "add-purchase-request" | "view-purchase-request" | "edit-purchase-request", rowData?: any) => {
+    // for the modals of add, view, edit, audit trail, and track status
+    const openModal = (mode: "add-purchase-request" | "view-purchase-request" | "edit-purchase-request" | "audit-trail-purchase-request" | "track-status-purchase-request", rowData?: any) => {
         let content;
 
         switch (mode) {
             case "add-purchase-request":
-                content = <AddPurchaseModal
-                    onSave={handleAddPurchaseRequest}
+                content = <AddPurchaseRequest
+                    onAddPurchaseRequest={handleAddPurchaseRequest}
                     onClose={closeModal}
+                    currentUser="Admin User"
                 />;
                 break;
             case "view-purchase-request":
-                content = <ViewPurchaseModal
+                content = <ViewPurchaseRequest
                     purchaseRequest={rowData}
                     onClose={closeModal}
                 />;
                 break;
             case "edit-purchase-request":
-                content = <EditPurchaseModal
+                content = <EditPurchaseRequest
                     purchaseRequest={rowData}
-                    onSave={handleEditPurchaseRequest}
+                    onEditPurchaseRequest={handleEditPurchaseRequest}
+                    onClose={closeModal}
+                    currentUser="Admin User"
+                />;
+                break;
+            case "audit-trail-purchase-request":
+                content = <AuditTrailPurchaseRequest
+                    requestId={`PR-${rowData?.id || '001'}`}
+                    requestTitle={rowData?.itemName || 'Purchase Request'}
+                    onClose={closeModal}
+                />;
+                break;
+            case "track-status-purchase-request":
+                content = <TrackStatusPurchaseRequest
+                    requestId={`PR-${rowData?.id || '001'}`}
+                    requestTitle={rowData?.itemName || 'Purchase Request'}
                     onClose={closeModal}
                 />;
                 break;
@@ -303,41 +355,45 @@ export default function PurchaseRequest() {
     };
 
     // Handle add purchase request
-    const handleAddPurchaseRequest = (purchaseRequests: PurchaseRequestForm[]) => {
-        console.log("Saving forms:", purchaseRequests);
+    const handleAddPurchaseRequest = (formData: NewBudgetRequest) => {
+        console.log("Adding purchase request:", formData);
         
-        const newRequests = purchaseRequests.map((request, index) => ({
+        // Convert formData to table format
+        const newRequests = formData.items?.map((item, index) => ({
             id: filteredData.length + index + 1,
-            itemName: request.itemName,
-            quantity: request.quantity,
-            unitMeasure: request.unitMeasure,
-            requestType: request.requestType,
-            requestStatus: request.requestStatus,
-            requestPurpose: request.requestPurpose,
-            vendor: request.supplierDetails?.supplierName || "Unknown Vendor",
-            unitPrice: request.supplierDetails?.unitPrice || 0
-        }));
+            itemName: item.item_name,
+            quantity: item.quantity,
+            unitMeasure: item.unit_measure,
+            requestType: formData.budget_period, // normal/urgent
+            requestStatus: 'pending',
+            requestPurpose: formData.description,
+            vendor: item.supplier,
+            unitPrice: item.unit_cost
+        })) || [];
         
         setFilteredData(prev => [...prev, ...newRequests]);
         closeModal();
     };
 
     // Handle edit purchase request
-    const handleEditPurchaseRequest = (updatedRequest: PurchaseRequestForm) => {
-        console.log("Updating request:", updatedRequest);
+    const handleEditPurchaseRequest = (formData: NewBudgetRequest) => {
+        console.log("Updating purchase request:", formData);
         
-        if (activeRow) {
+        if (activeRow && formData.items && formData.items.length > 0) {
+            // Get the first item (since we're editing a single purchase request)
+            const updatedItem = formData.items[0];
+            
             const updatedData = filteredData.map(request => 
                 request.id === activeRow.id ? {
                     ...request,
-                    itemName: updatedRequest.itemName,
-                    quantity: updatedRequest.quantity,
-                    unitMeasure: updatedRequest.unitMeasure,
-                    requestType: updatedRequest.requestType,
-                    requestStatus: updatedRequest.requestStatus,
-                    requestPurpose: updatedRequest.requestPurpose,
-                    vendor: request.vendor, // Keep existing vendor if not changed
-                    unitPrice: request.unitPrice // Keep existing unit price if not changed
+                    itemName: updatedItem.item_name,
+                    quantity: updatedItem.quantity,
+                    unitMeasure: updatedItem.unit_measure,
+                    requestType: formData.budget_period, // normal/urgent
+                    requestStatus: 'pending', // Reset to pending when edited
+                    requestPurpose: formData.description,
+                    vendor: updatedItem.supplier,
+                    unitPrice: updatedItem.unit_cost
                 } : request
             );
             
@@ -410,17 +466,7 @@ export default function PurchaseRequest() {
 
     // Handle audit trail
     const handleAuditTrail = (request: any) => {
-        // Simulate audit trail data
-        const auditData = [
-            { date: "2024-01-15", action: "Created", user: "John Doe", status: "pending" },
-            { date: "2024-01-16", action: "Updated", user: "Jane Smith", status: "pending" },
-            { date: "2024-01-17", action: "Approved", user: "Manager A", status: "approved" },
-            { date: "2024-01-18", action: "Completed", user: "System", status: "completed" }
-        ];
-        
-        console.log("Audit trail for request:", request.id, auditData);
-        // In a real application, this would open a modal with audit trail details
-        showSuccess(`Audit trail for "${request.itemName}" has been generated.`, "Audit Trail");
+        openModal("audit-trail-purchase-request", request);
     };
 
     // Handle process refund
@@ -444,24 +490,7 @@ export default function PurchaseRequest() {
 
     // Handle track status
     const handleTrackStatus = (request: any) => {
-        // Simulate tracking information
-        const trackingInfo = {
-            requestId: request.id,
-            currentStatus: request.requestStatus,
-            estimatedCompletion: "2024-02-15",
-            lastUpdate: new Date().toLocaleDateString(),
-            trackingSteps: [
-                { step: "Request Submitted", completed: true, date: "2024-01-15" },
-                { step: "Pending Approval", completed: true, date: "2024-01-16" },
-                { step: "Approved", completed: request.requestStatus !== "pending", date: request.requestStatus !== "pending" ? "2024-01-17" : null },
-                { step: "Processing", completed: request.requestStatus === "completed" || request.requestStatus === "partially-completed", date: request.requestStatus === "completed" ? "2024-01-18" : null },
-                { step: "Completed", completed: request.requestStatus === "completed", date: request.requestStatus === "completed" ? "2024-01-19" : null }
-            ]
-        };
-        
-        console.log("Tracking info for request:", request.id, trackingInfo);
-        // In a real application, this would open a modal with tracking details
-        showSuccess(`Tracking information for "${request.itemName}" has been retrieved.`, "Status Tracking");
+        openModal("track-status-purchase-request", request);
     };
 
     // Get conditional action buttons based on request status
@@ -589,7 +618,11 @@ export default function PurchaseRequest() {
                                                 {formatStatus(request.requestStatus)}
                                             </span>
                                         </td>
-                                        <td>{formatRequestType(request.requestType)}</td>
+                                        <td className="table-status">
+                                            <span className={`chip ${request.requestType}`}>
+                                                {formatRequestType(request.requestType)}
+                                            </span>
+                                        </td>
                                         <td>
                                             {getActionButtons(request)}
                                         </td>
