@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 //@ts-ignore
 import ModalManager from "../../Components/modalManager";
 import ActionButtons from "../../Components/actionButtons";
 import FilterDropdown, { FilterSection } from "../../Components/filter";
+import Loading from "../../Components/loading";
 import PaginationComponent from "../../Components/pagination";
 //@ts-ignore
 import AddPurchaseRequest from "./addPurchaseRequest";
@@ -58,74 +59,96 @@ import "../../styles/components/table.css";
 import "../../styles/components/chips.css";
 // @ts-ignore
 import "../../styles/components/loading.css";
-
-const hardcodedData = [
-    {
-        id: 1,
-        itemName: "Brake Disc",
-        quantity: 5,
-        unitMeasure: "pcs",
-        requestType: "urgent",
-        requestStatus: "pending",
-        requestPurpose: "Replacement for Bus 001",
-        vendor: "AutoParts Inc.",
-        unitPrice: 450.00
-    },
-    {
-        id: 2,
-        itemName: "Engine Oil",
-        quantity: 10,
-        unitMeasure: "liters",
-        requestType: "normal",
-        requestStatus: "approved",
-        requestPurpose: "Maintenance of Bus 002",
-        vendor: "OilMax Supply",
-        unitPrice: 85.00
-    },
-    {
-        id: 3,
-        itemName: "Tire",
-        quantity: 4,
-        unitMeasure: "pcs",
-        requestType: "normal",
-        requestStatus: "rejected",
-        requestPurpose: "Transfer to Branch Office",
-        vendor: "TireMax Corp.",
-        unitPrice: 320.00
-    },
-    {
-        id: 4,
-        itemName: "Air Filter",
-        quantity: 8,
-        unitMeasure: "pcs",
-        requestType: "normal",
-        requestStatus: "completed",
-        requestPurpose: "Scheduled maintenance for fleet",
-        vendor: "FilterPro Ltd.",
-        unitPrice: 35.00
-    },
-    {
-        id: 5,
-        itemName: "Brake Pads",
-        quantity: 12,
-        unitMeasure: "sets",
-        requestType: "urgent",
-        requestStatus: "partially-completed",
-        requestPurpose: "Emergency repair for Bus 005",
-        vendor: "BrakeTech Corp.",
-        unitPrice: 180.00
-    }
-];
+  
 
 export default function PurchaseRequest() {
+    // Move hardcoded data outside of useEffect so it's accessible throughout the component
+    const hardcodedData = [
+        {
+            id: 1,
+            itemName: "Brake Disc",
+            quantity: 5,
+            unitMeasure: "pcs",
+            requestType: "urgent",
+            requestStatus: "pending",
+            requestPurpose: "Replacement for Bus 001",
+            vendor: "AutoParts Inc.",
+            unitPrice: 450.00
+        },
+        {
+            id: 2,
+            itemName: "Engine Oil",
+            quantity: 10,
+            unitMeasure: "liters",
+            requestType: "normal",
+            requestStatus: "approved",
+            requestPurpose: "Maintenance of Bus 002",
+            vendor: "OilMax Supply",
+            unitPrice: 85.00
+        },
+        {
+            id: 3,
+            itemName: "Tire",
+            quantity: 4,
+            unitMeasure: "pcs",
+            requestType: "normal",
+            requestStatus: "rejected",
+            requestPurpose: "Transfer to Branch Office",
+            vendor: "TireMax Corp.",
+            unitPrice: 320.00
+        },
+        {
+            id: 4,
+            itemName: "Air Filter",
+            quantity: 8,
+            unitMeasure: "pcs",
+            requestType: "normal",
+            requestStatus: "completed",
+            requestPurpose: "Scheduled maintenance for fleet",
+            vendor: "FilterPro Ltd.",
+            unitPrice: 35.00
+        },
+        {
+            id: 5,
+            itemName: "Brake Pads",
+            quantity: 12,
+            unitMeasure: "sets",
+            requestType: "urgent",
+            requestStatus: "partially-completed",
+            requestPurpose: "Emergency repair for Bus 005",
+            vendor: "BrakeTech Corp.",
+            unitPrice: 180.00
+        }
+    ];
+
+    useEffect(() => {
+        const fetchData = async () => {
+            setLoading(true);
+            try {
+                // Simulate API call
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Set the hardcoded data to filteredData state
+                setFilteredData(hardcodedData);
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                showError('Failed to load purchase requests', 'Error');
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
+
     // for modal
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [activeRow, setActiveRow] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
     const [modalContent, setModalContent] = useState<React.ReactNode>(null);
 
     // For filtering
-    const [filteredData, setFilteredData] = useState(hardcodedData);
+    const [filteredData, setFilteredData] = useState<any[]>([]);
 
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
@@ -552,6 +575,15 @@ export default function PurchaseRequest() {
                 );
         }
     };
+
+    if (loading) {
+      return (
+          <div className="card">
+              <h1 className="title">Purchase Request</h1>
+              <Loading />
+          </div>
+      );
+  }
 
     return (
         <div className="card">
