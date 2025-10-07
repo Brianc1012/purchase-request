@@ -39,6 +39,7 @@
   position: relative !important;
   font-family: var(--font-sans) !important;
   color: var(--primary-text-color) !important;
+  margin: auto !important;
 }
 
 .addBudgetRequestModal form {

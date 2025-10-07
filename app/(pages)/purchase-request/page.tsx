@@ -324,10 +324,12 @@ export default function PurchaseRequest() {
 
     // for the modals of add, view, edit, audit trail, and track status
     const openModal = (mode: "add-purchase-request" | "view-purchase-request" | "edit-purchase-request" | "audit-trail-purchase-request" | "track-status-purchase-request", rowData?: any) => {
+        console.log("openModal called with mode:", mode);
         let content;
 
         switch (mode) {
             case "add-purchase-request":
+                console.log("Creating AddPurchaseRequest component");
                 content = <AddPurchaseRequest
                     onAddPurchaseRequest={handleAddPurchaseRequest}
                     onClose={closeModal}
@@ -366,6 +368,8 @@ export default function PurchaseRequest() {
                 content = null;
         }
 
+        console.log("Setting modal content:", content);
+        console.log("Setting isModalOpen to true");
         setModalContent(content);
         setActiveRow(rowData || null);
         setIsModalOpen(true);
@@ -615,7 +619,13 @@ export default function PurchaseRequest() {
                     </button>
 
                     {/* Add Purchase Request Button */}
-                    <button className="main-btn" onClick={() => openModal("add-purchase-request")}>
+                    <button 
+                        className="main-btn" 
+                        onClick={() => {
+                            console.log("Add Request button clicked!");
+                            openModal("add-purchase-request");
+                        }}
+                    >
                         <i className="ri-add-line" /> Add Request
                     </button>
                 </div>
